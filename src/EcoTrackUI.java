@@ -12,13 +12,13 @@ public class EcoTrackUI extends JFrame {
     private JComboBox<Integer> co2QtyBox;
 
     private JLabel[] tempLabels = new JLabel[3];
-    private JTextField[] tempInputs = new JTextField[3];
+    private JSpinner[] tempSpinners = new JSpinner[3];
 
     private JLabel[] humidLabels = new JLabel[3];
-    private JTextField[] humidInputs = new JTextField[3];
+    private JSpinner[] humidSpinners = new JSpinner[3];
 
     private JLabel[] co2Labels = new JLabel[3];
-    private JTextField[] co2Inputs = new JTextField[3];
+    private JSpinner[] co2Spinners = new JSpinner[3];
 
     private JPanel sensorCardsContainer;
     private JLabel avgTempLabel;
@@ -76,9 +76,13 @@ public class EcoTrackUI extends JFrame {
         tempRow.add(tempQtyBox);
         for (int i = 0; i < 3; i++) {
             tempLabels[i] = new JLabel("T" + (i + 1) + ":");
-            tempInputs[i] = new JTextField(4);
+            SpinnerNumberModel tempModel = new SpinnerNumberModel(22.0, -20.0, 60.0, 0.1);
+            tempSpinners[i] = new JSpinner(tempModel);
+            JSpinner.NumberEditor tempEditor = new JSpinner.NumberEditor(tempSpinners[i], "0.0");
+            tempSpinners[i].setEditor(tempEditor);
+            tempSpinners[i].setPreferredSize(new Dimension(70, 26));
             tempRow.add(tempLabels[i]);
-            tempRow.add(tempInputs[i]);
+            tempRow.add(tempSpinners[i]);
         }
         inputsPanel.add(tempRow);
 
@@ -89,9 +93,13 @@ public class EcoTrackUI extends JFrame {
         humidRow.add(humidQtyBox);
         for (int i = 0; i < 3; i++) {
             humidLabels[i] = new JLabel("H" + (i + 1) + ":");
-            humidInputs[i] = new JTextField(4);
+            SpinnerNumberModel humidModel = new SpinnerNumberModel(50.0, 0.0, 100.0, 1.0);
+            humidSpinners[i] = new JSpinner(humidModel);
+            JSpinner.NumberEditor humidEditor = new JSpinner.NumberEditor(humidSpinners[i], "0.0");
+            humidSpinners[i].setEditor(humidEditor);
+            humidSpinners[i].setPreferredSize(new Dimension(70, 26));
             humidRow.add(humidLabels[i]);
-            humidRow.add(humidInputs[i]);
+            humidRow.add(humidSpinners[i]);
         }
         inputsPanel.add(humidRow);
 
@@ -102,9 +110,13 @@ public class EcoTrackUI extends JFrame {
         co2Row.add(co2QtyBox);
         for (int i = 0; i < 3; i++) {
             co2Labels[i] = new JLabel("C" + (i + 1) + ":");
-            co2Inputs[i] = new JTextField(4);
+            SpinnerNumberModel co2Model = new SpinnerNumberModel(400.0, 0.0, 5000.0, 10.0);
+            co2Spinners[i] = new JSpinner(co2Model);
+            JSpinner.NumberEditor co2Editor = new JSpinner.NumberEditor(co2Spinners[i], "0.0");
+            co2Spinners[i].setEditor(co2Editor);
+            co2Spinners[i].setPreferredSize(new Dimension(70, 26));
             co2Row.add(co2Labels[i]);
-            co2Row.add(co2Inputs[i]);
+            co2Row.add(co2Spinners[i]);
         }
         inputsPanel.add(co2Row);
 
@@ -223,27 +235,27 @@ public class EcoTrackUI extends JFrame {
         int tempQty = (Integer) tempQtyBox.getSelectedItem();
         for (int i = 0; i < 3; i++) {
             tempLabels[i].setVisible(i < tempQty);
-            tempInputs[i].setVisible(i < tempQty);
+            tempSpinners[i].setVisible(i < tempQty);
             if (i >= tempQty) {
-                tempInputs[i].setText("");
+                tempSpinners[i].setValue(22.0);
             }
         }
 
         int humidQty = (Integer) humidQtyBox.getSelectedItem();
         for (int i = 0; i < 3; i++) {
             humidLabels[i].setVisible(i < humidQty);
-            humidInputs[i].setVisible(i < humidQty);
+            humidSpinners[i].setVisible(i < humidQty);
             if (i >= humidQty) {
-                humidInputs[i].setText("");
+                humidSpinners[i].setValue(50.0);
             }
         }
 
         int co2Qty = (Integer) co2QtyBox.getSelectedItem();
         for (int i = 0; i < 3; i++) {
             co2Labels[i].setVisible(i < co2Qty);
-            co2Inputs[i].setVisible(i < co2Qty);
+            co2Spinners[i].setVisible(i < co2Qty);
             if (i >= co2Qty) {
-                co2Inputs[i].setText("");
+                co2Spinners[i].setValue(400.0);
             }
         }
 
@@ -312,93 +324,73 @@ public class EcoTrackUI extends JFrame {
     }
 
     private void runProceduralAnalysis() {
-        try {
-            system.clearSensors();
-            sensorCardsContainer.removeAll();
+        system.clearSensors();
+        sensorCardsContainer.removeAll();
 
-            int sensorCount = 1;
+        int sensorCount = 1;
 
-            int tempQty = (Integer) tempQtyBox.getSelectedItem();
-            for (int i = 0; i < tempQty; i++) {
-                String text = tempInputs[i].getText().trim();
-                if (text.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Please enter Temperature T" + (i + 1) + " reading.", "Input Required", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                double val = Double.parseDouble(text);
-                if (val < -20.0 || val > 60.0) {
-                    JOptionPane.showMessageDialog(this, "Illogical Input: Temperature reading " + val + " °C is unrealistic for indoor office environment.\nMust be between -20°C and 60°C.", "Invalid Reading", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                Sensor sensor = new TemperatureSensor("S-" + sensorCount++, val);
-                system.addSensor(sensor);
+        int tempQty = (Integer) tempQtyBox.getSelectedItem();
+        for (int i = 0; i < tempQty; i++) {
+            double val = (Double) tempSpinners[i].getValue();
+            if (val < -20.0 || val > 60.0) {
+                JOptionPane.showMessageDialog(this, "Illogical Input: Temperature reading " + val + " °C is unrealistic for indoor office environment.\nMust be between -20°C and 60°C.", "Invalid Reading", JOptionPane.ERROR_MESSAGE);
+                return;
             }
-
-            int humidQty = (Integer) humidQtyBox.getSelectedItem();
-            for (int i = 0; i < humidQty; i++) {
-                String text = humidInputs[i].getText().trim();
-                if (text.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Please enter Humidity H" + (i + 1) + " reading.", "Input Required", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                double val = Double.parseDouble(text);
-                if (val < 0.0 || val > 100.0) {
-                    JOptionPane.showMessageDialog(this, "Illogical Input: Humidity reading " + val + " % is unrealistic.\nMust be between 0% and 100%.", "Invalid Reading", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                Sensor sensor = new HumiditySensor("S-" + sensorCount++, val);
-                system.addSensor(sensor);
-            }
-
-            int co2Qty = (Integer) co2QtyBox.getSelectedItem();
-            for (int i = 0; i < co2Qty; i++) {
-                String text = co2Inputs[i].getText().trim();
-                if (text.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Please enter CO2 C" + (i + 1) + " reading.", "Input Required", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                double val = Double.parseDouble(text);
-                if (val < 0.0 || val > 5000.0) {
-                    JOptionPane.showMessageDialog(this, "Illogical Input: CO2 reading " + val + " ppm is unrealistic for office environment.\nMust be between 0 ppm and 5000 ppm.", "Invalid Reading", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                Sensor sensor = new CO2Sensor("S-" + sensorCount++, val);
-                system.addSensor(sensor);
-            }
-
-            for (Sensor s : system.getSensorList()) {
-                JPanel card = createSensorCard(s);
-                sensorCardsContainer.add(card);
-                sensorCardsContainer.add(Box.createRigidArea(new Dimension(0, 8)));
-            }
-
-            double avgTemp = system.getAverageTemp();
-            double avgHumid = system.getAverageHumid();
-            double avgCO2 = system.getAverageCO2();
-
-            avgTempLabel.setText(String.format("%.1f °C", avgTemp));
-            avgHumidLabel.setText(String.format("%.1f %%", avgHumid));
-            avgCO2Label.setText(String.format("%.1f ppm", avgCO2));
-
-            String result = system.runAnalysis();
-            systemStatusLabel.setText("SYSTEM STATUS: " + result.toUpperCase());
-
-            if (result.contains("CRITICAL")) {
-                statusCard.setBackground(new Color(254, 242, 242));
-                systemStatusLabel.setForeground(new Color(220, 38, 38));
-            } else if (result.contains("WARNING")) {
-                statusCard.setBackground(new Color(254, 243, 199));
-                systemStatusLabel.setForeground(new Color(217, 119, 6));
-            } else {
-                statusCard.setBackground(new Color(240, 253, 250));
-                systemStatusLabel.setForeground(new Color(13, 148, 136));
-            }
-
-            sensorCardsContainer.revalidate();
-            sensorCardsContainer.repaint();
-
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Please enter valid numbers in all active reading fields.", "Format Error", JOptionPane.ERROR_MESSAGE);
+            Sensor sensor = new TemperatureSensor("S-" + sensorCount++, val);
+            system.addSensor(sensor);
         }
+
+        int humidQty = (Integer) humidQtyBox.getSelectedItem();
+        for (int i = 0; i < humidQty; i++) {
+            double val = (Double) humidSpinners[i].getValue();
+            if (val < 0.0 || val > 100.0) {
+                JOptionPane.showMessageDialog(this, "Illogical Input: Humidity reading " + val + " % is unrealistic.\nMust be between 0% and 100%.", "Invalid Reading", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            Sensor sensor = new HumiditySensor("S-" + sensorCount++, val);
+            system.addSensor(sensor);
+        }
+
+        int co2Qty = (Integer) co2QtyBox.getSelectedItem();
+        for (int i = 0; i < co2Qty; i++) {
+            double val = (Double) co2Spinners[i].getValue();
+            if (val < 0.0 || val > 5000.0) {
+                JOptionPane.showMessageDialog(this, "Illogical Input: CO2 reading " + val + " ppm is unrealistic for office environment.\nMust be between 0 ppm and 5000 ppm.", "Invalid Reading", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            Sensor sensor = new CO2Sensor("S-" + sensorCount++, val);
+            system.addSensor(sensor);
+        }
+
+        for (Sensor s : system.getSensorList()) {
+            JPanel card = createSensorCard(s);
+            sensorCardsContainer.add(card);
+            sensorCardsContainer.add(Box.createRigidArea(new Dimension(0, 8)));
+        }
+
+        double avgTemp = system.getAverageTemp();
+        double avgHumid = system.getAverageHumid();
+        double avgCO2 = system.getAverageCO2();
+
+        avgTempLabel.setText(String.format("%.1f °C", avgTemp));
+        avgHumidLabel.setText(String.format("%.1f %%", avgHumid));
+        avgCO2Label.setText(String.format("%.1f ppm", avgCO2));
+
+        String result = system.runAnalysis();
+        systemStatusLabel.setText("SYSTEM STATUS: " + result.toUpperCase());
+
+        if (result.contains("CRITICAL")) {
+            statusCard.setBackground(new Color(254, 242, 242));
+            systemStatusLabel.setForeground(new Color(220, 38, 38));
+        } else if (result.contains("WARNING")) {
+            statusCard.setBackground(new Color(254, 243, 199));
+            systemStatusLabel.setForeground(new Color(217, 119, 6));
+        } else {
+            statusCard.setBackground(new Color(240, 253, 250));
+            systemStatusLabel.setForeground(new Color(13, 148, 136));
+        }
+
+        sensorCardsContainer.revalidate();
+        sensorCardsContainer.repaint();
     }
 }
