@@ -377,6 +377,27 @@ public class EcoTrackUI extends JFrame {
         avgCO2Label.setText(String.format("%.1f ppm", avgCO2));
 
         String result = system.runAnalysis();
+
+        String tempConsistency  = system.checkSensorConsistency(5.0,   TemperatureSensor.class, "°C");
+        String humidConsistency = system.checkSensorConsistency(20.0,  HumiditySensor.class,    "%");
+        String co2Consistency   = system.checkSensorConsistency(300.0, CO2Sensor.class,         " ppm");
+
+        StringBuilder allWarnings = new StringBuilder();
+        if (tempConsistency  != null) allWarnings.append("── Temperature ──\n").append(tempConsistency).append("\n\n");
+        if (humidConsistency != null) allWarnings.append("── Humidity ──\n").append(humidConsistency).append("\n\n");
+        if (co2Consistency   != null) allWarnings.append("── CO2 ──\n").append(co2Consistency).append("\n\n");
+
+        if (allWarnings.length() > 0) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Sensor Consistency Warning:\n\n" + allWarnings.toString().trim() +
+                "\n\nThe average was still calculated from all sensors.\n" +
+                "Consider checking the flagged sensors.",
+                "Cross-Sensor Inconsistency Detected",
+                JOptionPane.WARNING_MESSAGE
+            );
+        }
+
         systemStatusLabel.setText("SYSTEM STATUS: " + result.toUpperCase());
 
         if (result.contains("CRITICAL")) {
